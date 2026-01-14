@@ -171,3 +171,70 @@ pub trait Potential3<T: Vector> {
         )
     }
 }
+
+// ============================================================================
+// 4-Body Potential (Torsion & Improper)
+// ============================================================================
+
+/// Four-body dihedral potential energy function.
+///
+/// Computes energy as a function of the dihedral angle formed by four particles.
+///
+/// For proper torsions (i-j-k-l): phi is the angle between planes (i,j,k) and (j,k,l)
+/// For improper torsions: phi typically measures out-of-plane displacement
+///
+/// ## Input Convention
+///
+/// Methods accept both `cos_phi` and `sin_phi` because:
+/// 1. Both are efficiently computed from cross products
+/// 2. Many potentials need `cos(n*phi)` which requires both via Chebyshev/recurrence
+/// 3. The sign of `sin_phi` determines the quadrant
+///
+/// ## Derivative Convention
+///
+/// The `derivative` method returns `dV/d(phi)`.
+///
+/// Note: This is the derivative with respect to the angle itself, not its
+/// trigonometric functions. The caller handles the chain rule:
+///
+/// ```text
+/// dV/d(cos_phi) = -dV/d(phi) / sin_phi  (where sin_phi != 0)
+/// ```
+pub trait Potential4<T: Vector> {
+    /// Computes the potential energy.
+    ///
+    /// ## Arguments
+    ///
+    /// - `cos_phi`: Cosine of dihedral angle
+    /// - `sin_phi`: Sine of dihedral angle
+    ///
+    /// ## Returns
+    ///
+    /// Potential energy V(phi)
+    fn energy(&self, cos_phi: T, sin_phi: T) -> T;
+
+    /// Computes the derivative with respect to phi.
+    ///
+    /// ## Arguments
+    ///
+    /// - `cos_phi`: Cosine of dihedral angle
+    /// - `sin_phi`: Sine of dihedral angle
+    ///
+    /// ## Returns
+    ///
+    /// Derivative `dV/d(phi)`
+    fn derivative(&self, cos_phi: T, sin_phi: T) -> T;
+
+    /// Computes both energy and derivative simultaneously.
+    ///
+    /// ## Returns
+    ///
+    /// Tuple of (energy, dV/d(phi))
+    #[inline(always)]
+    fn energy_derivative(&self, cos_phi: T, sin_phi: T) -> (T, T) {
+        (
+            self.energy(cos_phi, sin_phi),
+            self.derivative(cos_phi, sin_phi),
+        )
+    }
+}
