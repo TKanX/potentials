@@ -406,3 +406,168 @@ pub(crate) mod scalar_f32 {
         libm::powf(x, y)
     }
 }
+
+/// Scalar f64 math operations.
+///
+/// Provides platform-independent math functions for `f64` type.
+/// Uses `std` library when available, falls back to `libm` in `no_std`.
+pub(crate) mod scalar_f64 {
+    #[cfg(feature = "std")]
+    extern crate std;
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn sqrt(x: f64) -> f64 {
+        x.sqrt()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn sqrt(x: f64) -> f64 {
+        libm::sqrt(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn abs(x: f64) -> f64 {
+        x.abs()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn abs(x: f64) -> f64 {
+        libm::fabs(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn min(x: f64, y: f64) -> f64 {
+        x.min(y)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn min(x: f64, y: f64) -> f64 {
+        libm::fmin(x, y)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn max(x: f64, y: f64) -> f64 {
+        x.max(y)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn max(x: f64, y: f64) -> f64 {
+        libm::fmax(x, y)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn exp(x: f64) -> f64 {
+        x.exp()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn exp(x: f64) -> f64 {
+        libm::exp(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn ln(x: f64) -> f64 {
+        x.ln()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn ln(x: f64) -> f64 {
+        libm::log(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn sin(x: f64) -> f64 {
+        x.sin()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn sin(x: f64) -> f64 {
+        libm::sin(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn cos(x: f64) -> f64 {
+        x.cos()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn cos(x: f64) -> f64 {
+        libm::cos(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn acos(x: f64) -> f64 {
+        x.acos()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn acos(x: f64) -> f64 {
+        libm::acos(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn asin(x: f64) -> f64 {
+        x.asin()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn asin(x: f64) -> f64 {
+        libm::asin(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn atan2(y: f64, x: f64) -> f64 {
+        y.atan2(x)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn atan2(y: f64, x: f64) -> f64 {
+        libm::atan2(y, x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn powi(x: f64, n: i32) -> f64 {
+        x.powi(n)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn powi(x: f64, n: i32) -> f64 {
+        libm::pow(x, n as f64)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn powf(x: f64, y: f64) -> f64 {
+        x.powf(y)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn powf(x: f64, y: f64) -> f64 {
+        libm::pow(x, y)
+    }
+}
