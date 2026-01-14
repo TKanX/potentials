@@ -169,3 +169,71 @@ impl<T: Vector> Potential2<T> for Lj<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_lj_at_sigma() {
+        let lj: Lj<f64> = Lj::new(1.0, 1.0);
+        let r_sq = 1.0;
+        let energy = lj.energy(r_sq);
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_lj_at_r_min() {
+        let epsilon = 1.0;
+        let sigma = 1.0;
+        let lj: Lj<f64> = Lj::new(epsilon, sigma);
+
+        let r_min = 2.0_f64.powf(1.0 / 6.0) * sigma;
+        let r_sq = r_min * r_min;
+        let energy = lj.energy(r_sq);
+
+        assert_relative_eq!(energy, -epsilon, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_lj_force_at_r_min() {
+        let lj: Lj<f64> = Lj::new(1.0, 1.0);
+
+        let r_min = 2.0_f64.powf(1.0 / 6.0);
+        let r_sq = r_min * r_min;
+        let force = lj.force_factor(r_sq);
+
+        assert_relative_eq!(force, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_lj_energy_force_consistency() {
+        let lj: Lj<f64> = Lj::new(0.238, 3.4);
+        let r_sq = 16.0;
+
+        let (e1, f1) = lj.energy_force(r_sq);
+        let e2 = lj.energy(r_sq);
+        let f2 = lj.force_factor(r_sq);
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-12);
+        assert_relative_eq!(f1, f2, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn test_lj_numerical_derivative() {
+        let lj: Lj<f64> = Lj::new(1.0, 1.0);
+        let r = 1.5;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = lj.energy((r + h) * (r + h));
+        let v_minus = lj.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = lj.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
