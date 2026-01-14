@@ -17,10 +17,10 @@
 //!
 //! ## Supported Types
 //!
-//! | Type | Description |
-//! |------|-------------|
-//! | `f32` | 32-bit floating point |
-//! | `f64` | 64-bit floating point |
+//! | Vector Type | Mask Type | Description |
+//! |-------------|-----------|-------------|
+//! | `f32` | [`MaskF32`] | 32-bit floating point |
+//! | `f64` | [`MaskF64`] | 64-bit floating point |
 
 use core::ops::{Add, BitAnd, BitOr, Div, Mul, Neg, Not, Sub};
 
@@ -573,24 +573,119 @@ pub(crate) mod scalar_f64 {
 }
 
 // ============================================================================
-// Scalar Implementation: bool as Mask
+// Scalar Mask Types
 // ============================================================================
 
-impl Mask for bool {
-    type Vector = f64;
+/// Boolean mask wrapper for `f32` scalar operations.
+///
+/// This newtype wrapper provides a consistent API for mask operations
+/// across both `f32` and `f64` types, enabling symmetric code patterns.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MaskF32(pub bool);
+
+/// Boolean mask wrapper for `f64` scalar operations.
+///
+/// This newtype wrapper provides a consistent API for mask operations
+/// across both `f32` and `f64` types, enabling symmetric code patterns.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct MaskF64(pub bool);
+
+// ============================================================================
+// MaskF32 Implementation
+// ============================================================================
+
+impl BitAnd for MaskF32 {
+    type Output = Self;
+
+    #[inline(always)]
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self(self.0 && rhs.0)
+    }
+}
+
+impl BitOr for MaskF32 {
+    type Output = Self;
+
+    #[inline(always)]
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 || rhs.0)
+    }
+}
+
+impl Not for MaskF32 {
+    type Output = Self;
+
+    #[inline(always)]
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
+
+impl Mask for MaskF32 {
+    type Vector = f32;
 
     #[inline(always)]
     fn any(self) -> bool {
-        self
+        self.0
     }
 
     #[inline(always)]
     fn all(self) -> bool {
-        self
+        self.0
+    }
+
+    #[inline(always)]
+    fn select(self, if_true: f32, if_false: f32) -> f32 {
+        if self.0 { if_true } else { if_false }
+    }
+}
+
+// ============================================================================
+// MaskF64 Implementation
+// ============================================================================
+
+impl BitAnd for MaskF64 {
+    type Output = Self;
+
+    #[inline(always)]
+    fn bitand(self, rhs: Self) -> Self::Output {
+        Self(self.0 && rhs.0)
+    }
+}
+
+impl BitOr for MaskF64 {
+    type Output = Self;
+
+    #[inline(always)]
+    fn bitor(self, rhs: Self) -> Self::Output {
+        Self(self.0 || rhs.0)
+    }
+}
+
+impl Not for MaskF64 {
+    type Output = Self;
+
+    #[inline(always)]
+    fn not(self) -> Self::Output {
+        Self(!self.0)
+    }
+}
+
+impl Mask for MaskF64 {
+    type Vector = f64;
+
+    #[inline(always)]
+    fn any(self) -> bool {
+        self.0
+    }
+
+    #[inline(always)]
+    fn all(self) -> bool {
+        self.0
     }
 
     #[inline(always)]
     fn select(self, if_true: f64, if_false: f64) -> f64 {
-        if self { if_true } else { if_false }
+        if self.0 { if_true } else { if_false }
     }
 }
