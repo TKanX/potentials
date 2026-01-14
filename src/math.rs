@@ -571,3 +571,26 @@ pub(crate) mod scalar_f64 {
         libm::pow(x, y)
     }
 }
+
+// ============================================================================
+// Scalar Implementation: bool as Mask
+// ============================================================================
+
+impl Mask for bool {
+    type Vector = f64;
+
+    #[inline(always)]
+    fn any(self) -> bool {
+        self
+    }
+
+    #[inline(always)]
+    fn all(self) -> bool {
+        self
+    }
+
+    #[inline(always)]
+    fn select(self, if_true: f64, if_false: f64) -> f64 {
+        if self { if_true } else { if_false }
+    }
+}
