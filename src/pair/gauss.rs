@@ -138,3 +138,83 @@ impl<T: Vector> Potential2<T> for Gauss<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_gauss_at_zero() {
+        let gauss: Gauss<f64> = Gauss::new(5.0, 1.0);
+        let energy = gauss.energy(0.0);
+        assert_relative_eq!(energy, 5.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_gauss_decay() {
+        let a = 1.0;
+        let b = 0.5;
+        let gauss: Gauss<f64> = Gauss::new(a, b);
+
+        let r = 2.0;
+        let r_sq = r * r;
+        let energy = gauss.energy(r_sq);
+        let expected = a * (-b * r_sq).exp();
+
+        assert_relative_eq!(energy, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_gauss_force_at_zero() {
+        let a = 3.0;
+        let b = 0.5;
+        let gauss: Gauss<f64> = Gauss::new(a, b);
+
+        let force = gauss.force_factor(1e-20);
+        let expected = 2.0 * a * b;
+
+        assert_relative_eq!(force, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_gauss_from_sigma() {
+        let a = 2.0;
+        let sigma = 1.5;
+        let g1: Gauss<f64> = Gauss::from_sigma(a, sigma);
+        let g2: Gauss<f64> = Gauss::new(a, 1.0 / (2.0 * sigma * sigma));
+
+        let r_sq = 3.0;
+        assert_relative_eq!(g1.energy(r_sq), g2.energy(r_sq), epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_gauss_energy_force_consistency() {
+        let gauss: Gauss<f64> = Gauss::new(10.0, 0.25);
+        let r_sq = 2.25;
+
+        let (e1, f1) = gauss.energy_force(r_sq);
+        let e2 = gauss.energy(r_sq);
+        let f2 = gauss.force_factor(r_sq);
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-10);
+        assert_relative_eq!(f1, f2, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_gauss_numerical_derivative() {
+        let gauss: Gauss<f64> = Gauss::new(10.0, 0.25);
+        let r = 1.5;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = gauss.energy((r + h) * (r + h));
+        let v_minus = gauss.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = gauss.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
