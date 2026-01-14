@@ -899,3 +899,274 @@ impl Vector for f64 {
         MaskF64(self == other)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn approx_eq_f64(a: f64, b: f64, eps: f64) -> bool {
+        (a - b).abs() < eps || (a - b).abs() / a.abs().max(b.abs()).max(1.0) < eps
+    }
+
+    fn approx_eq_f32(a: f32, b: f32, eps: f32) -> bool {
+        (a - b).abs() < eps || (a - b).abs() / a.abs().max(b.abs()).max(1.0) < eps
+    }
+
+    // ========================================================================
+    // f32 Tests
+    // ========================================================================
+
+    #[test]
+    fn test_f32_splat() {
+        let val = 42.5;
+        assert!(approx_eq_f32(f32::splat(val), val as f32, 1e-5));
+    }
+
+    #[test]
+    fn test_f32_zero_and_one() {
+        assert_eq!(f32::zero(), 0.0_f32);
+        assert_eq!(f32::one(), 1.0_f32);
+    }
+
+    #[test]
+    fn test_f32_sqrt() {
+        assert!(approx_eq_f32(4.0_f32.sqrt(), 2.0, 1e-6));
+        assert!(approx_eq_f32(9.0_f32.sqrt(), 3.0, 1e-6));
+    }
+
+    #[test]
+    fn test_f32_rsqrt() {
+        assert!(approx_eq_f32(4.0_f32.rsqrt(), 0.5, 1e-6));
+    }
+
+    #[test]
+    fn test_f32_recip() {
+        assert!(approx_eq_f32(2.0_f32.recip(), 0.5, 1e-6));
+    }
+
+    #[test]
+    fn test_f32_abs() {
+        assert!(approx_eq_f32((-3.0_f32).abs(), 3.0, 1e-6));
+        assert!(approx_eq_f32(3.0_f32.abs(), 3.0, 1e-6));
+    }
+
+    #[test]
+    fn test_f32_min_max() {
+        assert_eq!(3.0_f32.min(5.0), 3.0);
+        assert_eq!(3.0_f32.max(5.0), 5.0);
+    }
+
+    #[test]
+    fn test_f32_exp_ln() {
+        assert!(approx_eq_f32(1.0_f32.exp(), core::f32::consts::E, 1e-6));
+        assert!(approx_eq_f32(core::f32::consts::E.ln(), 1.0, 1e-6));
+    }
+
+    #[test]
+    fn test_f32_sin_cos() {
+        assert!(approx_eq_f32(0.0_f32.sin(), 0.0, 1e-6));
+        assert!(approx_eq_f32(0.0_f32.cos(), 1.0, 1e-6));
+    }
+
+    #[test]
+    fn test_f32_acos_asin() {
+        assert!(approx_eq_f32(
+            0.0_f32.acos(),
+            core::f32::consts::FRAC_PI_2,
+            1e-6
+        ));
+        assert!(approx_eq_f32(0.0_f32.asin(), 0.0, 1e-6));
+    }
+
+    #[test]
+    fn test_f32_atan2() {
+        assert!(approx_eq_f32(
+            1.0_f32.atan2(1.0),
+            core::f32::consts::FRAC_PI_4,
+            1e-6
+        ));
+    }
+
+    #[test]
+    fn test_f32_powi_powf() {
+        assert!(approx_eq_f32(2.0_f32.powi(3), 8.0, 1e-6));
+        assert!(approx_eq_f32(2.0_f32.powf(3.0), 8.0, 1e-6));
+    }
+
+    #[test]
+    fn test_f32_comparisons() {
+        assert!(1.0_f32.lt(2.0).0);
+        assert!(!2.0_f32.lt(1.0).0);
+        assert!(1.0_f32.le(1.0).0);
+        assert!(2.0_f32.gt(1.0).0);
+        assert!(2.0_f32.ge(2.0).0);
+        assert!(1.0_f32.eq(1.0).0);
+    }
+
+    #[test]
+    fn test_f32_mask_select() {
+        assert_eq!(MaskF32(true).select(1.0_f32, 2.0_f32), 1.0_f32);
+        assert_eq!(MaskF32(false).select(1.0_f32, 2.0_f32), 2.0_f32);
+    }
+
+    #[test]
+    fn test_f32_mask_any_all() {
+        assert!(MaskF32(true).any());
+        assert!(MaskF32(true).all());
+        assert!(!MaskF32(false).any());
+        assert!(!MaskF32(false).all());
+    }
+
+    #[test]
+    fn test_f32_mask_bitops() {
+        assert_eq!(MaskF32(true) & MaskF32(true), MaskF32(true));
+        assert_eq!(MaskF32(true) & MaskF32(false), MaskF32(false));
+        assert_eq!(MaskF32(true) | MaskF32(false), MaskF32(true));
+        assert_eq!(MaskF32(false) | MaskF32(false), MaskF32(false));
+        assert_eq!(!MaskF32(true), MaskF32(false));
+        assert_eq!(!MaskF32(false), MaskF32(true));
+    }
+
+    // ========================================================================
+    // f64 Tests
+    // ========================================================================
+
+    #[test]
+    fn test_f64_splat() {
+        let val = 42.5;
+        assert_eq!(f64::splat(val), val);
+    }
+
+    #[test]
+    fn test_f64_zero_and_one() {
+        assert_eq!(f64::zero(), 0.0);
+        assert_eq!(f64::one(), 1.0);
+    }
+
+    #[test]
+    fn test_f64_sqrt() {
+        assert!(approx_eq_f64(4.0_f64.sqrt(), 2.0, 1e-10));
+        assert!(approx_eq_f64(9.0_f64.sqrt(), 3.0, 1e-10));
+    }
+
+    #[test]
+    fn test_f64_rsqrt() {
+        assert!(approx_eq_f64(4.0_f64.rsqrt(), 0.5, 1e-10));
+    }
+
+    #[test]
+    fn test_f64_recip() {
+        assert!(approx_eq_f64(2.0_f64.recip(), 0.5, 1e-10));
+    }
+
+    #[test]
+    fn test_f64_abs() {
+        assert!(approx_eq_f64((-3.0_f64).abs(), 3.0, 1e-10));
+        assert!(approx_eq_f64(3.0_f64.abs(), 3.0, 1e-10));
+    }
+
+    #[test]
+    fn test_f64_min_max() {
+        assert_eq!(3.0_f64.min(5.0), 3.0);
+        assert_eq!(3.0_f64.max(5.0), 5.0);
+    }
+
+    #[test]
+    fn test_f64_exp_ln() {
+        assert!(approx_eq_f64(1.0_f64.exp(), core::f64::consts::E, 1e-10));
+        assert!(approx_eq_f64(core::f64::consts::E.ln(), 1.0, 1e-10));
+    }
+
+    #[test]
+    fn test_f64_sin_cos() {
+        assert!(approx_eq_f64(0.0_f64.sin(), 0.0, 1e-10));
+        assert!(approx_eq_f64(0.0_f64.cos(), 1.0, 1e-10));
+    }
+
+    #[test]
+    fn test_f64_acos_asin() {
+        assert!(approx_eq_f64(
+            0.0_f64.acos(),
+            core::f64::consts::FRAC_PI_2,
+            1e-10
+        ));
+        assert!(approx_eq_f64(0.0_f64.asin(), 0.0, 1e-10));
+    }
+
+    #[test]
+    fn test_f64_atan2() {
+        assert!(approx_eq_f64(
+            1.0_f64.atan2(1.0),
+            core::f64::consts::FRAC_PI_4,
+            1e-10
+        ));
+    }
+
+    #[test]
+    fn test_f64_powi_powf() {
+        assert!(approx_eq_f64(2.0_f64.powi(3), 8.0, 1e-10));
+        assert!(approx_eq_f64(2.0_f64.powf(3.0), 8.0, 1e-10));
+    }
+
+    #[test]
+    fn test_f64_comparisons() {
+        assert!(1.0_f64.lt(2.0).0);
+        assert!(!2.0_f64.lt(1.0).0);
+        assert!(1.0_f64.le(1.0).0);
+        assert!(2.0_f64.gt(1.0).0);
+        assert!(2.0_f64.ge(2.0).0);
+        assert!(1.0_f64.eq(1.0).0);
+    }
+
+    #[test]
+    fn test_f64_mask_select() {
+        assert_eq!(MaskF64(true).select(1.0, 2.0), 1.0);
+        assert_eq!(MaskF64(false).select(1.0, 2.0), 2.0);
+    }
+
+    #[test]
+    fn test_f64_mask_any_all() {
+        assert!(MaskF64(true).any());
+        assert!(MaskF64(true).all());
+        assert!(!MaskF64(false).any());
+        assert!(!MaskF64(false).all());
+    }
+
+    #[test]
+    fn test_f64_mask_bitops() {
+        assert_eq!(MaskF64(true) & MaskF64(true), MaskF64(true));
+        assert_eq!(MaskF64(true) & MaskF64(false), MaskF64(false));
+        assert_eq!(MaskF64(true) | MaskF64(false), MaskF64(true));
+        assert_eq!(MaskF64(false) | MaskF64(false), MaskF64(false));
+        assert_eq!(!MaskF64(true), MaskF64(false));
+        assert_eq!(!MaskF64(false), MaskF64(true));
+    }
+
+    // ========================================================================
+    // Float Trait Tests
+    // ========================================================================
+
+    #[test]
+    fn test_float_constants() {
+        assert!(approx_eq_f32(f32::PI, core::f32::consts::PI, 1e-7));
+        assert!(approx_eq_f64(f64::PI, core::f64::consts::PI, 1e-15));
+    }
+
+    #[test]
+    fn test_float_conversions() {
+        assert_eq!(f64::from_f64(42.0), 42.0);
+        assert!(approx_eq_f32(f32::from_f64(42.0), 42.0, 1e-6));
+        assert_eq!(42.0_f64.to_f64(), 42.0);
+        assert!(approx_eq_f64(42.0_f32.to_f64(), 42.0, 1e-6));
+    }
+
+    // ========================================================================
+    // Vector Trait Associated Constants Tests
+    // ========================================================================
+
+    #[test]
+    fn test_vector_lanes() {
+        assert_eq!(f64::LANES, 1);
+        assert_eq!(f32::LANES, 1);
+    }
+}
