@@ -324,3 +324,88 @@ fn int_pow_vec<T: Vector, const N: u32>(x: T) -> T {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_soft_at_sigma() {
+        let epsilon_val = 2.0;
+        let sigma = 1.5;
+        let soft: Soft<f64, 12> = Soft::new(epsilon_val, sigma);
+
+        let r_sq = sigma * sigma;
+        let energy = soft.energy(r_sq);
+
+        assert_relative_eq!(energy, epsilon_val, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_soft_repulsive() {
+        let soft: Soft<f64, 12> = Soft::new(1.0, 1.0);
+
+        for &r in &[0.5, 1.0, 2.0, 5.0] {
+            let energy = soft.energy(r * r);
+            assert!(energy > 0.0, "Energy at r={} should be positive", r);
+        }
+    }
+
+    #[test]
+    fn test_soft_decay() {
+        let soft: Soft<f64, 12> = Soft::new(1.0, 1.0);
+
+        let e1 = soft.energy(1.0);
+        let e2 = soft.energy(4.0);
+
+        assert!(e1 > e2, "Energy should decrease with distance");
+    }
+
+    #[test]
+    fn test_soft_different_exponents() {
+        let soft6: Soft<f64, 6> = Soft::new(1.0, 1.0);
+        let soft12: Soft<f64, 12> = Soft::new(1.0, 1.0);
+
+        let r_sq = 1.5 * 1.5;
+        let e6 = soft6.energy(r_sq);
+        let e12 = soft12.energy(r_sq);
+
+        assert!(e6 > 0.0);
+        assert!(e12 > 0.0);
+        assert!(
+            e12 < e6,
+            "Higher exponent should decay faster for r > sigma"
+        );
+    }
+
+    #[test]
+    fn test_soft_energy_force_consistency() {
+        let soft: Soft<f64, 9> = Soft::new(0.5, 2.0);
+        let r_sq = 6.25;
+
+        let (e1, f1) = soft.energy_force(r_sq);
+        let e2 = soft.energy(r_sq);
+        let f2 = soft.force_factor(r_sq);
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-12);
+        assert_relative_eq!(f1, f2, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn test_soft_numerical_derivative() {
+        let soft: Soft<f64, 12> = Soft::new(1.0, 1.0);
+        let r = 1.2;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = soft.energy((r + h) * (r + h));
+        let v_minus = soft.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = soft.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
