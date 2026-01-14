@@ -5,7 +5,7 @@ authors = ["Tony Kan <tianchengkan@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/TKanX/potentials"
 edition = "2024"
-description = "A lightweight, SIMD-accelerated Rust library for classical molecular dynamics potentials, providing modular force field components (LJ, bonds, angles, torsions) for major systems like DREIDING, AMBER, and GROMOS, with high-performance, branchless kernels in no-std scientific computing."
+description = "A lightweight Rust library for classical molecular dynamics potentials, providing modular force field components (LJ, bonds, angles, torsions) for major systems like DREIDING, AMBER, and GROMOS, with high-performance, branchless kernels in no-std scientific computing."
 keywords = [
     "chemistry",
     "physics",
@@ -20,7 +20,7 @@ readme = "README.md"
 libm = { version = "0.2.15", optional = true }
 
 [dev-dependencies]
-approx = "0.5"
+approx = "0.5.1"
 
 [lib]
 name = "potentials"
