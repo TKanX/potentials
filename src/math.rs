@@ -794,3 +794,108 @@ impl Vector for f32 {
         MaskF32(self == other)
     }
 }
+
+// ============================================================================
+// Scalar Implementation: f64 as Vector
+// ============================================================================
+
+impl Vector for f64 {
+    type Mask = MaskF64;
+    type Scalar = f64;
+    const LANES: usize = 1;
+
+    #[inline(always)]
+    fn splat(value: f64) -> Self {
+        value
+    }
+
+    #[inline(always)]
+    fn sqrt(self) -> Self {
+        scalar_f64::sqrt(self)
+    }
+
+    #[inline(always)]
+    fn abs(self) -> Self {
+        scalar_f64::abs(self)
+    }
+
+    #[inline(always)]
+    fn min(self, other: Self) -> Self {
+        scalar_f64::min(self, other)
+    }
+
+    #[inline(always)]
+    fn max(self, other: Self) -> Self {
+        scalar_f64::max(self, other)
+    }
+
+    #[inline(always)]
+    fn exp(self) -> Self {
+        scalar_f64::exp(self)
+    }
+
+    #[inline(always)]
+    fn ln(self) -> Self {
+        scalar_f64::ln(self)
+    }
+
+    #[inline(always)]
+    fn sin(self) -> Self {
+        scalar_f64::sin(self)
+    }
+
+    #[inline(always)]
+    fn cos(self) -> Self {
+        scalar_f64::cos(self)
+    }
+
+    #[inline(always)]
+    fn acos(self) -> Self {
+        scalar_f64::acos(self)
+    }
+
+    #[inline(always)]
+    fn asin(self) -> Self {
+        scalar_f64::asin(self)
+    }
+
+    #[inline(always)]
+    fn atan2(self, other: Self) -> Self {
+        scalar_f64::atan2(self, other)
+    }
+
+    #[inline(always)]
+    fn powi(self, n: i32) -> Self {
+        scalar_f64::powi(self, n)
+    }
+
+    #[inline(always)]
+    fn powf(self, exp: Self) -> Self {
+        scalar_f64::powf(self, exp)
+    }
+
+    #[inline(always)]
+    fn lt(self, other: Self) -> Self::Mask {
+        MaskF64(self < other)
+    }
+
+    #[inline(always)]
+    fn le(self, other: Self) -> Self::Mask {
+        MaskF64(self <= other)
+    }
+
+    #[inline(always)]
+    fn gt(self, other: Self) -> Self::Mask {
+        MaskF64(self > other)
+    }
+
+    #[inline(always)]
+    fn ge(self, other: Self) -> Self::Mask {
+        MaskF64(self >= other)
+    }
+
+    #[inline(always)]
+    fn eq(self, other: Self) -> Self::Mask {
+        MaskF64(self == other)
+    }
+}
