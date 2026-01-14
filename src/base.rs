@@ -97,3 +97,77 @@ pub trait Potential2<T: Vector> {
         (self.energy(r_sq), self.force_factor(r_sq))
     }
 }
+
+// ============================================================================
+// 3-Body Potential (Angle)
+// ============================================================================
+
+/// Three-body angular potential energy function.
+///
+/// Computes energy as a function of the angle formed by three particles (i-j-k),
+/// where j is the central vertex.
+///
+/// ## Input Convention
+///
+/// Methods accept:
+/// - `r_ij_sq`: Squared distance i-j
+/// - `r_jk_sq`: Squared distance j-k
+/// - `cos_theta`: Cosine of angle i-j-k (computed from dot product)
+///
+/// The cosine is preferred over the angle itself because:
+/// 1. It's directly available from the dot product: `cos_theta = (r_ij · r_jk) / (|r_ij| |r_jk|)`
+/// 2. Many angle potentials (GROMOS, DREIDING) use cosine directly
+/// 3. Avoids expensive `acos` operation in the common case
+///
+/// ## Derivative Convention
+///
+/// The `derivative` method returns `dV/d(cos_theta)`.
+///
+/// The caller is responsible for applying the chain rule to obtain
+/// Cartesian forces. For angle i-j-k:
+///
+/// ```text
+/// d(cos_theta)/d(r_i) = (r_jk/|r_jk| - cos_theta * r_ij/|r_ij|) / |r_ij|
+/// ```
+///
+/// (and similar expressions for j and k)
+pub trait Potential3<T: Vector> {
+    /// Computes the potential energy.
+    ///
+    /// ## Arguments
+    ///
+    /// - `r_ij_sq`: Squared distance from i to j
+    /// - `r_jk_sq`: Squared distance from j to k
+    /// - `cos_theta`: Cosine of angle i-j-k
+    ///
+    /// ## Returns
+    ///
+    /// Potential energy V(theta)
+    fn energy(&self, r_ij_sq: T, r_jk_sq: T, cos_theta: T) -> T;
+
+    /// Computes the derivative with respect to cos(theta).
+    ///
+    /// ## Arguments
+    ///
+    /// - `r_ij_sq`: Squared distance from i to j
+    /// - `r_jk_sq`: Squared distance from j to k
+    /// - `cos_theta`: Cosine of angle i-j-k
+    ///
+    /// ## Returns
+    ///
+    /// Derivative `dV/d(cos_theta)`
+    fn derivative(&self, r_ij_sq: T, r_jk_sq: T, cos_theta: T) -> T;
+
+    /// Computes both energy and derivative simultaneously.
+    ///
+    /// ## Returns
+    ///
+    /// Tuple of (energy, dV/d(cos_theta))
+    #[inline(always)]
+    fn energy_derivative(&self, r_ij_sq: T, r_jk_sq: T, cos_theta: T) -> (T, T) {
+        (
+            self.energy(r_ij_sq, r_jk_sq, cos_theta),
+            self.derivative(r_ij_sq, r_jk_sq, cos_theta),
+        )
+    }
+}
