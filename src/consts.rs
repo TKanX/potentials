@@ -152,3 +152,233 @@ pub const fn ev_to_kcal(ev: f64) -> f64 {
 pub const fn kcal_to_ev(kcal: f64) -> f64 {
     kcal / 23.060_541
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    // ========================================================================
+    // Mathematical Constants Tests
+    // ========================================================================
+
+    #[test]
+    fn test_pi() {
+        assert_relative_eq!(PI, core::f64::consts::PI, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn test_two_pi() {
+        assert_relative_eq!(TWO_PI, 2.0 * PI, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn test_half_pi() {
+        assert_relative_eq!(HALF_PI, PI / 2.0, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn test_deg_to_rad() {
+        assert_relative_eq!(180.0 * DEG_TO_RAD, PI, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn test_rad_to_deg() {
+        assert_relative_eq!(PI * RAD_TO_DEG, 180.0, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn test_deg_rad_inverse() {
+        assert_relative_eq!(DEG_TO_RAD * RAD_TO_DEG, 1.0, epsilon = 1e-15);
+    }
+
+    // ========================================================================
+    // Fundamental Physical Constants Tests (CODATA 2018)
+    // ========================================================================
+
+    #[test]
+    fn test_speed_of_light() {
+        assert_eq!(SPEED_OF_LIGHT, 299_792_458.0);
+    }
+
+    #[test]
+    fn test_planck_constant() {
+        assert_eq!(PLANCK, 6.626_070_15e-34);
+    }
+
+    #[test]
+    fn test_hbar() {
+        assert_relative_eq!(HBAR, PLANCK / TWO_PI, epsilon = 1e-20);
+    }
+
+    #[test]
+    fn test_elementary_charge() {
+        assert_eq!(ELEMENTARY_CHARGE, 1.602_176_634e-19);
+    }
+
+    #[test]
+    fn test_electron_mass() {
+        assert_relative_eq!(ELECTRON_MASS, 9.109_383_701_5e-31, epsilon = 1e-40);
+    }
+
+    #[test]
+    fn test_proton_mass() {
+        assert_relative_eq!(PROTON_MASS, 1.672_621_923_69e-27, epsilon = 1e-37);
+    }
+
+    #[test]
+    fn test_avogadro() {
+        assert_eq!(AVOGADRO, 6.022_140_76e23);
+    }
+
+    #[test]
+    fn test_boltzmann() {
+        assert_eq!(BOLTZMANN, 1.380_649e-23);
+    }
+
+    #[test]
+    fn test_gas_constant() {
+        assert_relative_eq!(GAS_CONSTANT, AVOGADRO * BOLTZMANN, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_vacuum_permittivity() {
+        assert_relative_eq!(VACUUM_PERMITTIVITY, 8.854_187_812_8e-12, epsilon = 1e-21);
+    }
+
+    #[test]
+    fn test_coulomb_constant() {
+        let calculated = 1.0 / (4.0 * PI * VACUUM_PERMITTIVITY);
+        assert_relative_eq!(COULOMB_CONSTANT, calculated, max_relative = 1e-8);
+    }
+
+    // ========================================================================
+    // Derived Constants Tests
+    // ========================================================================
+
+    #[test]
+    fn test_amu() {
+        assert_relative_eq!(AMU, 1.660_539_066_60e-27, epsilon = 1e-36);
+    }
+
+    #[test]
+    fn test_angstrom() {
+        assert_eq!(ANGSTROM, 1.0e-10);
+    }
+
+    #[test]
+    fn test_femtosecond() {
+        assert_eq!(FEMTOSECOND, 1.0e-15);
+    }
+
+    #[test]
+    fn test_picosecond() {
+        assert_eq!(PICOSECOND, 1.0e-12);
+        assert_eq!(PICOSECOND, 1000.0 * FEMTOSECOND);
+    }
+
+    #[test]
+    fn test_electronvolt() {
+        assert_eq!(ELECTRONVOLT, ELEMENTARY_CHARGE);
+    }
+
+    #[test]
+    fn test_kcal_per_mol() {
+        assert_eq!(KCAL_PER_MOL, 4184.0);
+    }
+
+    #[test]
+    fn test_kj_per_mol() {
+        assert_eq!(KJ_PER_MOL, 1000.0);
+    }
+
+    // ========================================================================
+    // Electrostatics Conversion Factors Tests
+    // ========================================================================
+
+    #[test]
+    fn test_coulomb_real() {
+        assert_relative_eq!(COULOMB_REAL, 332.063_713, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_coulomb_metal() {
+        assert_relative_eq!(COULOMB_METAL, 14.399_645, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_coulomb_real_metal_ratio() {
+        let ratio = COULOMB_REAL / COULOMB_METAL;
+        assert_relative_eq!(ratio, 23.060_541, epsilon = 1e-4);
+    }
+
+    // ========================================================================
+    // Conversion Function Tests
+    // ========================================================================
+
+    #[test]
+    fn test_deg2rad() {
+        assert_relative_eq!(deg2rad(0.0), 0.0, epsilon = 1e-15);
+        assert_relative_eq!(deg2rad(90.0), HALF_PI, epsilon = 1e-15);
+        assert_relative_eq!(deg2rad(180.0), PI, epsilon = 1e-15);
+        assert_relative_eq!(deg2rad(360.0), TWO_PI, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn test_rad2deg() {
+        assert_relative_eq!(rad2deg(0.0), 0.0, epsilon = 1e-15);
+        assert_relative_eq!(rad2deg(HALF_PI), 90.0, epsilon = 1e-10);
+        assert_relative_eq!(rad2deg(PI), 180.0, epsilon = 1e-10);
+        assert_relative_eq!(rad2deg(TWO_PI), 360.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_deg_rad_roundtrip() {
+        let values = [0.0, 45.0, 90.0, 180.0, 270.0, 360.0];
+        for &deg in &values {
+            assert_relative_eq!(rad2deg(deg2rad(deg)), deg, epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_kcal_to_kj() {
+        assert_relative_eq!(kcal_to_kj(1.0), 4.184, epsilon = 1e-10);
+        assert_relative_eq!(kcal_to_kj(0.0), 0.0, epsilon = 1e-15);
+        assert_relative_eq!(kcal_to_kj(10.0), 41.84, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_kj_to_kcal() {
+        assert_relative_eq!(kj_to_kcal(4.184), 1.0, epsilon = 1e-10);
+        assert_relative_eq!(kj_to_kcal(0.0), 0.0, epsilon = 1e-15);
+        assert_relative_eq!(kj_to_kcal(41.84), 10.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_kcal_kj_roundtrip() {
+        let values = [0.0, 1.0, 10.0, 100.0, -5.0];
+        for &kcal in &values {
+            assert_relative_eq!(kj_to_kcal(kcal_to_kj(kcal)), kcal, epsilon = 1e-10);
+        }
+    }
+
+    #[test]
+    fn test_ev_to_kcal() {
+        assert_relative_eq!(ev_to_kcal(1.0), 23.060_541, epsilon = 1e-6);
+        assert_relative_eq!(ev_to_kcal(0.0), 0.0, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn test_kcal_to_ev() {
+        assert_relative_eq!(kcal_to_ev(23.060_541), 1.0, epsilon = 1e-6);
+        assert_relative_eq!(kcal_to_ev(0.0), 0.0, epsilon = 1e-15);
+    }
+
+    #[test]
+    fn test_ev_kcal_roundtrip() {
+        let values = [0.0, 1.0, 10.0, 100.0, -5.0];
+        for &ev in &values {
+            assert_relative_eq!(kcal_to_ev(ev_to_kcal(ev)), ev, epsilon = 1e-10);
+        }
+    }
+}
