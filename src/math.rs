@@ -101,3 +101,139 @@ impl Float for f64 {
         self
     }
 }
+
+// ============================================================================
+// Vector Trait
+// ============================================================================
+
+/// Unified interface for scalar floating-point math operations.
+///
+/// This trait abstracts over scalar types (`f32`, `f64`),
+/// providing a consistent API for all potential computations.
+///
+/// ## Required Operations
+///
+/// - **Arithmetic**: `+`, `-`, `*`, `/`, negation
+/// - **Math**: `sqrt`, `rsqrt`, `recip`, `exp`, `ln`, `sin`, `cos`, `acos`, `powi`
+/// - **Comparison**: `lt`, `le`, `gt`, `ge`, `eq`
+/// - **Selection**: `select` for branchless conditionals
+pub trait Vector:
+    Copy
+    + Clone
+    + Sized
+    + Add<Output = Self>
+    + Sub<Output = Self>
+    + Mul<Output = Self>
+    + Div<Output = Self>
+    + Neg<Output = Self>
+{
+    /// Associated mask type for conditional operations.
+    type Mask: Mask<Vector = Self>;
+
+    /// The underlying scalar type for this vector.
+    type Scalar: Float;
+
+    /// Number of lanes in this vector (1 for scalars).
+    const LANES: usize;
+
+    // ========================================================================
+    // Constants
+    // ========================================================================
+
+    /// Broadcasts a scalar value to all lanes.
+    fn splat(value: f64) -> Self;
+
+    /// Returns a vector of zeros.
+    #[inline(always)]
+    fn zero() -> Self {
+        Self::splat(0.0)
+    }
+
+    /// Returns a vector of ones.
+    #[inline(always)]
+    fn one() -> Self {
+        Self::splat(1.0)
+    }
+
+    // ========================================================================
+    // Basic Math
+    // ========================================================================
+
+    /// Square root: `sqrt(x)`.
+    fn sqrt(self) -> Self;
+
+    /// Reciprocal square root: `1 / sqrt(x)`.
+    #[inline(always)]
+    fn rsqrt(self) -> Self {
+        Self::one() / self.sqrt()
+    }
+
+    /// Reciprocal: `1 / x`.
+    #[inline(always)]
+    fn recip(self) -> Self {
+        Self::one() / self
+    }
+
+    /// Absolute value: `|x|`.
+    fn abs(self) -> Self;
+
+    /// Minimum of two values (lane-wise).
+    fn min(self, other: Self) -> Self;
+
+    /// Maximum of two values (lane-wise).
+    fn max(self, other: Self) -> Self;
+
+    // ========================================================================
+    // Transcendental Functions
+    // ========================================================================
+
+    /// Exponential: `e^x`.
+    fn exp(self) -> Self;
+
+    /// Natural logarithm: `ln(x)`.
+    fn ln(self) -> Self;
+
+    /// Sine: `sin(x)`.
+    fn sin(self) -> Self;
+
+    /// Cosine: `cos(x)`.
+    fn cos(self) -> Self;
+
+    /// Arc cosine: `acos(x)`.
+    fn acos(self) -> Self;
+
+    /// Arc sine: `asin(x)`.
+    ///
+    /// **Warning**: Expensive operation. Avoid in inner loops when possible.
+    fn asin(self) -> Self;
+
+    /// Two-argument arc tangent: `atan2(y, x)`.
+    ///
+    /// Returns the angle between the positive x-axis and the point (x, y).
+    fn atan2(self, other: Self) -> Self;
+
+    /// Integer power: `x^n`.
+    fn powi(self, n: i32) -> Self;
+
+    /// Floating-point power: `x^y`.
+    fn powf(self, exp: Self) -> Self;
+
+    // ========================================================================
+    // Comparison (Returns Mask)
+    // ========================================================================
+
+    /// Less than: `x < y`.
+    fn lt(self, other: Self) -> Self::Mask;
+
+    /// Less than or equal: `x <= y`.
+    fn le(self, other: Self) -> Self::Mask;
+
+    /// Greater than: `x > y`.
+    fn gt(self, other: Self) -> Self::Mask;
+
+    /// Greater than or equal: `x >= y`.
+    fn ge(self, other: Self) -> Self::Mask;
+
+    /// Equal: `x == y` (exact floating-point equality).
+    fn eq(self, other: Self) -> Self::Mask;
+}
