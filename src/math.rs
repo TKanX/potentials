@@ -237,3 +237,172 @@ pub trait Vector:
     /// Equal: `x == y` (exact floating-point equality).
     fn eq(self, other: Self) -> Self::Mask;
 }
+
+// ============================================================================
+// Scalar Math Functions (std vs libm)
+// ============================================================================
+
+/// Scalar f32 math operations.
+///
+/// Provides platform-independent math functions for `f32` type.
+/// Uses `std` library when available, falls back to `libm` in `no_std`.
+pub(crate) mod scalar_f32 {
+    #[cfg(feature = "std")]
+    extern crate std;
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn sqrt(x: f32) -> f32 {
+        x.sqrt()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn sqrt(x: f32) -> f32 {
+        libm::sqrtf(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn abs(x: f32) -> f32 {
+        x.abs()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn abs(x: f32) -> f32 {
+        libm::fabsf(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn min(x: f32, y: f32) -> f32 {
+        x.min(y)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn min(x: f32, y: f32) -> f32 {
+        libm::fminf(x, y)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn max(x: f32, y: f32) -> f32 {
+        x.max(y)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn max(x: f32, y: f32) -> f32 {
+        libm::fmaxf(x, y)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn exp(x: f32) -> f32 {
+        x.exp()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn exp(x: f32) -> f32 {
+        libm::expf(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn ln(x: f32) -> f32 {
+        x.ln()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn ln(x: f32) -> f32 {
+        libm::logf(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn sin(x: f32) -> f32 {
+        x.sin()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn sin(x: f32) -> f32 {
+        libm::sinf(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn cos(x: f32) -> f32 {
+        x.cos()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn cos(x: f32) -> f32 {
+        libm::cosf(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn acos(x: f32) -> f32 {
+        x.acos()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn acos(x: f32) -> f32 {
+        libm::acosf(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn asin(x: f32) -> f32 {
+        x.asin()
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn asin(x: f32) -> f32 {
+        libm::asinf(x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn atan2(y: f32, x: f32) -> f32 {
+        y.atan2(x)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn atan2(y: f32, x: f32) -> f32 {
+        libm::atan2f(y, x)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn powi(x: f32, n: i32) -> f32 {
+        x.powi(n)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn powi(x: f32, n: i32) -> f32 {
+        libm::powf(x, n as f32)
+    }
+
+    #[cfg(feature = "std")]
+    #[inline(always)]
+    pub fn powf(x: f32, y: f32) -> f32 {
+        x.powf(y)
+    }
+
+    #[cfg(all(feature = "libm", not(feature = "std")))]
+    #[inline(always)]
+    pub fn powf(x: f32, y: f32) -> f32 {
+        libm::powf(x, y)
+    }
+}
