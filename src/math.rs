@@ -49,3 +49,55 @@ pub trait Mask:
     /// Returns `if_true` where mask is set, `if_false` otherwise.
     fn select(self, if_true: Self::Vector, if_false: Self::Vector) -> Self::Vector;
 }
+
+// ============================================================================
+// Float Trait (for scalar type abstraction)
+// ============================================================================
+
+/// Trait for floating-point scalar types (`f32` and `f64`).
+///
+/// This trait provides a unified interface for constants and conversions
+/// between different floating-point precisions.
+pub trait Float: Copy + Clone + Sized + PartialOrd {
+    /// The mathematical constant π.
+    const PI: Self;
+
+    /// The mathematical constant e (Euler's number).
+    const E: Self;
+
+    /// Converts from `f64` to this type.
+    fn from_f64(value: f64) -> Self;
+
+    /// Converts this type to `f64`.
+    fn to_f64(self) -> f64;
+}
+
+impl Float for f32 {
+    const PI: Self = core::f32::consts::PI;
+    const E: Self = core::f32::consts::E;
+
+    #[inline(always)]
+    fn from_f64(value: f64) -> Self {
+        value as f32
+    }
+
+    #[inline(always)]
+    fn to_f64(self) -> f64 {
+        self as f64
+    }
+}
+
+impl Float for f64 {
+    const PI: Self = core::f64::consts::PI;
+    const E: Self = core::f64::consts::E;
+
+    #[inline(always)]
+    fn from_f64(value: f64) -> Self {
+        value
+    }
+
+    #[inline(always)]
+    fn to_f64(self) -> f64 {
+        self
+    }
+}
