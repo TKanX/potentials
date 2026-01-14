@@ -371,3 +371,75 @@ fn int_pow_vec<T: Vector, const N: u32>(x: T) -> T {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_mie_reduces_to_lj() {
+        let mie: Mie<f64, 12, 6> = Mie::new(1.0, 1.0);
+        let lj = crate::pair::Lj::<f64>::new(1.0, 1.0);
+
+        let r_sq = 1.5 * 1.5;
+        let e_mie = mie.energy(r_sq);
+        let e_lj = lj.energy(r_sq);
+
+        assert_relative_eq!(e_mie, e_lj, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_mie_at_minimum() {
+        let epsilon = 1.5;
+        let sigma = 2.0;
+        let mie: Mie<f64, 10, 5> = Mie::new(epsilon, sigma);
+
+        let r_min = 2.0_f64.powf(1.0 / 5.0) * sigma;
+        let r_sq = r_min * r_min;
+        let energy = mie.energy(r_sq);
+
+        assert_relative_eq!(energy, -epsilon, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_mie_force_at_minimum() {
+        let mie: Mie<f64, 12, 6> = Mie::new(1.0, 1.0);
+
+        let r_min = 2.0_f64.powf(1.0 / 6.0);
+        let r_sq = r_min * r_min;
+        let force = mie.force_factor(r_sq);
+
+        assert_relative_eq!(force, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_mie_energy_force_consistency() {
+        let mie: Mie<f64, 9, 6> = Mie::new(0.5, 2.0);
+        let r_sq = 6.25;
+
+        let (e1, f1) = mie.energy_force(r_sq);
+        let e2 = mie.energy(r_sq);
+        let f2 = mie.force_factor(r_sq);
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-12);
+        assert_relative_eq!(f1, f2, epsilon = 1e-12);
+    }
+
+    #[test]
+    fn test_mie_numerical_derivative() {
+        let mie: Mie<f64, 9, 6> = Mie::new(1.0, 1.0);
+        let r = 1.2;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = mie.energy((r + h) * (r + h));
+        let v_minus = mie.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = mie.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
