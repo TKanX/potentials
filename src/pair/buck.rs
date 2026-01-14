@@ -166,3 +166,59 @@ impl<T: Vector> Potential2<T> for Buck<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_buck_at_r_2() {
+        let buck: Buck<f64> = Buck::new(1000.0, 2.0, 100.0);
+        let r_sq = 4.0;
+
+        let energy = buck.energy(r_sq);
+        let expected = 1000.0 * (-4.0_f64).exp() - 100.0 / 64.0;
+
+        assert_relative_eq!(energy, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_buck_from_rho() {
+        let buck1: Buck<f64> = Buck::new(1000.0, 2.0, 100.0);
+        let buck2: Buck<f64> = Buck::from_rho(1000.0, 0.5, 100.0);
+
+        let r_sq = 4.0;
+        assert_relative_eq!(buck1.energy(r_sq), buck2.energy(r_sq), epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_buck_energy_force_consistency() {
+        let buck: Buck<f64> = Buck::new(500.0, 1.5, 50.0);
+        let r_sq = 3.0;
+
+        let (e1, f1) = buck.energy_force(r_sq);
+        let e2 = buck.energy(r_sq);
+        let f2 = buck.force_factor(r_sq);
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-10);
+        assert_relative_eq!(f1, f2, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_buck_numerical_derivative() {
+        let buck: Buck<f64> = Buck::new(1000.0, 2.0, 100.0);
+        let r = 1.5;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = buck.energy((r + h) * (r + h));
+        let v_minus = buck.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = buck.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
