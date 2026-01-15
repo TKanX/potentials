@@ -94,3 +94,61 @@ impl<T: Vector> Potential3<T> for Linear<T> {
         (energy, derivative)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_linear_at_180() {
+        let k = 100.0;
+        let linear: Linear<f64> = Linear::new(k);
+
+        let energy = linear.energy(1.0, 1.0, -1.0);
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_linear_at_0() {
+        let k = 100.0;
+        let linear: Linear<f64> = Linear::new(k);
+
+        let energy = linear.energy(1.0, 1.0, 1.0);
+        assert_relative_eq!(energy, 2.0 * k, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_linear_at_90() {
+        let k = 100.0;
+        let linear: Linear<f64> = Linear::new(k);
+
+        let energy = linear.energy(1.0, 1.0, 0.0);
+        assert_relative_eq!(energy, k, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_linear_derivative_constant() {
+        let k = 100.0;
+        let linear: Linear<f64> = Linear::new(k);
+
+        assert_relative_eq!(linear.derivative(1.0, 1.0, -1.0), k, epsilon = 1e-10);
+        assert_relative_eq!(linear.derivative(1.0, 1.0, 0.0), k, epsilon = 1e-10);
+        assert_relative_eq!(linear.derivative(1.0, 1.0, 1.0), k, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_linear_numerical_derivative() {
+        let linear: Linear<f64> = Linear::new(100.0);
+        let cos_theta = 0.3;
+
+        let h = 1e-7;
+        let e_plus = linear.energy(1.0, 1.0, cos_theta + h);
+        let e_minus = linear.energy(1.0, 1.0, cos_theta - h);
+        let deriv_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let deriv_analytical = linear.derivative(1.0, 1.0, cos_theta);
+
+        assert_relative_eq!(deriv_analytical, deriv_numerical, epsilon = 1e-6);
+    }
+}
