@@ -157,3 +157,68 @@ impl<T: Vector> Potential2<T> for Fene<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_fene_at_zero() {
+        let fene: Fene<f64> = Fene::new(30.0, 1.5);
+
+        let energy = fene.energy(1e-20);
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_fene_increases() {
+        let fene: Fene<f64> = Fene::new(30.0, 1.5);
+
+        let e1 = fene.energy(0.5);
+        let e2 = fene.energy(1.0);
+        let e3 = fene.energy(1.5);
+
+        assert!(e1 < e2, "Energy should increase");
+        assert!(e2 < e3, "Energy should increase");
+    }
+
+    #[test]
+    fn test_fene_harmonic_limit() {
+        let k = 30.0;
+        let r_max = 1.5;
+        let fene: Fene<f64> = Fene::new(k, r_max);
+
+        let r = 0.1;
+        let r_sq = r * r;
+
+        let v_fene = fene.energy(r_sq);
+        let v_harmonic = 0.5 * k * r_sq;
+
+        let rel_diff = (v_fene - v_harmonic).abs() / v_harmonic;
+        assert!(
+            rel_diff < 0.01,
+            "FENE {} vs harmonic {}, diff {}%",
+            v_fene,
+            v_harmonic,
+            rel_diff * 100.0
+        );
+    }
+
+    #[test]
+    fn test_fene_numerical_derivative() {
+        let fene: Fene<f64> = Fene::new(30.0, 1.5);
+        let r = 0.8;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = fene.energy((r + h) * (r + h));
+        let v_minus = fene.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = fene.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
