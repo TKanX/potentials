@@ -168,3 +168,77 @@ impl<P: Potential2<T>, T: Vector> Potential2<T> for Switch<P, T> {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pair::Lj;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_switch_inside_rs() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let lj_sw = Switch::new(lj, 8.0, 10.0);
+
+        let r_sq = 25.0;
+        let e_base = lj.energy(r_sq);
+        let e_sw = lj_sw.energy(r_sq);
+
+        assert_relative_eq!(e_base, e_sw, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_switch_at_rs() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let rs = 8.0;
+        let lj_sw = Switch::new(lj, rs, 10.0);
+
+        let e_base = lj.energy(rs * rs);
+        let e_sw = lj_sw.energy(rs * rs);
+
+        assert_relative_eq!(e_base, e_sw, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_switch_at_rc() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let rc = 10.0;
+        let lj_sw = Switch::new(lj, 8.0, rc);
+
+        let r = rc - 0.0001;
+        let e = lj_sw.energy(r * r);
+
+        assert!(e.abs() < 1e-5);
+    }
+
+    #[test]
+    fn test_switch_outside_rc() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let lj_sw = Switch::new(lj, 8.0, 10.0);
+
+        let r_sq = 121.0;
+        let e = lj_sw.energy(r_sq);
+        let f = lj_sw.force_factor(r_sq);
+
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+        assert_relative_eq!(f, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_switch_numerical_derivative() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let lj_sw = Switch::new(lj, 8.0, 10.0);
+
+        let r = 9.0;
+
+        let h = 1e-7;
+        let e_plus = lj_sw.energy((r + h) * (r + h));
+        let e_minus = lj_sw.energy((r - h) * (r - h));
+        let dv_dr_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let f = lj_sw.force_factor(r * r);
+        let dv_dr_analytical = -f * r;
+
+        assert_relative_eq!(dv_dr_analytical, dv_dr_numerical, epsilon = 1e-6);
+    }
+}
