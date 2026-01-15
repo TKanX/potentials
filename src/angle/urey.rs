@@ -173,3 +173,55 @@ impl<T: Vector> Potential3<T> for Urey<T> {
         (e_angle + e_ub, d_angle + d_ub)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_urey_at_equilibrium() {
+        let cos0 = 0.0;
+        let r_ij = 1.0;
+        let r_jk = 1.0;
+        let r_ub = (r_ij * r_ij + r_jk * r_jk).sqrt();
+
+        let urey: Urey<f64> = Urey::new(100.0, cos0, 50.0, r_ub);
+
+        let energy = urey.energy(r_ij * r_ij, r_jk * r_jk, cos0);
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_urey_only_angle() {
+        let k_cos = 100.0;
+        let cos0 = 0.5;
+
+        let urey: Urey<f64> = Urey::new(k_cos, cos0, 0.0, 1.0);
+        let cos_angle = crate::angle::Cos::<f64>::new(k_cos, cos0);
+
+        let cos_theta = 0.3;
+        assert_relative_eq!(
+            urey.energy(1.0, 1.0, cos_theta),
+            cos_angle.energy(1.0, 1.0, cos_theta),
+            epsilon = 1e-10
+        );
+    }
+
+    #[test]
+    fn test_urey_numerical_derivative() {
+        let urey: Urey<f64> = Urey::new(100.0, 0.5, 50.0, 1.5);
+        let cos_theta = 0.3;
+        let r_ij_sq = 1.0;
+        let r_jk_sq = 1.2;
+
+        let h = 1e-7;
+        let e_plus = urey.energy(r_ij_sq, r_jk_sq, cos_theta + h);
+        let e_minus = urey.energy(r_ij_sq, r_jk_sq, cos_theta - h);
+        let deriv_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let deriv_analytical = urey.derivative(r_ij_sq, r_jk_sq, cos_theta);
+
+        assert_relative_eq!(deriv_analytical, deriv_numerical, epsilon = 1e-6);
+    }
+}
