@@ -232,3 +232,133 @@ fn cos_power_m1<T: Vector, const N: u32>(cos_theta: T) -> T {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_ljcos_at_minimum() {
+        let eps = 5.0;
+        let sigma = 2.5;
+        let ljcos: LjCos<f64, 4> = LjCos::new(eps, sigma);
+
+        let r_min = 2.0_f64.powf(1.0 / 6.0) * sigma;
+        let e = ljcos.energy(r_min * r_min, 1.0);
+
+        assert_relative_eq!(e, -eps, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_ljcos_angular_at_90() {
+        let ljcos: LjCos<f64, 4> = LjCos::new(5.0, 2.5);
+
+        let e = ljcos.energy(3.0 * 3.0, 0.0);
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_ljcos_cos2_vs_cos4() {
+        let eps = 5.0;
+        let sigma = 2.5;
+        let cos2: LjCos<f64, 2> = LjCos::new(eps, sigma);
+        let cos4: LjCos<f64, 4> = LjCos::new(eps, sigma);
+
+        let r_sq = 3.0 * 3.0;
+        let cos_theta = 0.7;
+
+        let e2 = cos2.energy(r_sq, cos_theta);
+        let e4 = cos4.energy(r_sq, cos_theta);
+
+        assert!(e4.abs() < e2.abs());
+
+        let e_lj = cos2.energy(r_sq, 1.0);
+        let ratio2 = e2 / e_lj;
+        let ratio4 = e4 / e_lj;
+
+        assert_relative_eq!(ratio2, cos_theta * cos_theta, epsilon = 1e-10);
+        assert_relative_eq!(ratio4, cos_theta.powi(4), epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_ljcos_numerical_radial_derivative() {
+        let ljcos: LjCos<f64, 4> = LjCos::new(5.0, 2.5);
+        let r = 3.0;
+        let cos_theta = 0.8;
+
+        let h = 1e-7;
+        let e_plus = ljcos.energy((r + h) * (r + h), cos_theta);
+        let e_minus = ljcos.energy((r - h) * (r - h), cos_theta);
+        let dv_dr_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let (s, _) = ljcos.derivative(r * r, cos_theta);
+        let dv_dr_analytical = -s * r;
+
+        assert_relative_eq!(dv_dr_analytical, dv_dr_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_ljcos_numerical_angular_derivative() {
+        let ljcos: LjCos<f64, 4> = LjCos::new(5.0, 2.5);
+        let r_sq = 3.0 * 3.0;
+        let cos_theta = 0.75;
+
+        let h = 1e-7;
+        let e_plus = ljcos.energy(r_sq, cos_theta + h);
+        let e_minus = ljcos.energy(r_sq, cos_theta - h);
+        let dv_dcos_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let (_, dv_dcos_analytical) = ljcos.derivative(r_sq, cos_theta);
+
+        assert_relative_eq!(dv_dcos_analytical, dv_dcos_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_cos_power() {
+        let c = 0.7_f64;
+
+        assert_relative_eq!(cos_power::<f64, 0>(c), 1.0, epsilon = 1e-10);
+        assert_relative_eq!(cos_power::<f64, 1>(c), c, epsilon = 1e-10);
+        assert_relative_eq!(cos_power::<f64, 2>(c), c * c, epsilon = 1e-10);
+        assert_relative_eq!(cos_power::<f64, 4>(c), c.powi(4), epsilon = 1e-10);
+        assert_relative_eq!(cos_power::<f64, 6>(c), c.powi(6), epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_ljcos_energy_derivative_consistency() {
+        let ljcos: LjCos<f64, 3> = LjCos::new(4.0, 2.2);
+        let r_sq = 2.8 * 2.8;
+        let cos_theta = 0.65;
+
+        let e1 = ljcos.energy(r_sq, cos_theta);
+        let (s1, dc1) = ljcos.derivative(r_sq, cos_theta);
+        let (e2, s2, dc2) = ljcos.energy_derivative(r_sq, cos_theta);
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-10);
+        assert_relative_eq!(s1, s2, epsilon = 1e-10);
+        assert_relative_eq!(dc1, dc2, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_ljcos_various_powers() {
+        let eps = 5.0;
+        let sigma = 2.5;
+        let r_sq = 3.0 * 3.0;
+        let cos_theta = 0.8;
+
+        let ljcos2: LjCos<f64, 2> = LjCos::new(eps, sigma);
+        let ljcos4: LjCos<f64, 4> = LjCos::new(eps, sigma);
+        let ljcos6: LjCos<f64, 6> = LjCos::new(eps, sigma);
+
+        let e2 = ljcos2.energy(r_sq, cos_theta);
+        let e4 = ljcos4.energy(r_sq, cos_theta);
+        let e6 = ljcos6.energy(r_sq, cos_theta);
+
+        let e_lin = ljcos2.energy(r_sq, 1.0);
+
+        assert_relative_eq!(e2 / e_lin, cos_theta.powi(2), epsilon = 1e-10);
+        assert_relative_eq!(e4 / e_lin, cos_theta.powi(4), epsilon = 1e-10);
+        assert_relative_eq!(e6 / e_lin, cos_theta.powi(6), epsilon = 1e-10);
+    }
+}
