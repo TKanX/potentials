@@ -115,3 +115,65 @@ impl<P: Potential2<T>, T: Vector> Potential2<T> for Softcore<P, T> {
         (self.lambda_m * e, self.lambda_m * f)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pair::Lj;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_softcore_lambda_one() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let lj_soft = Softcore::new(lj, 0.5, 3.4, 1.0, 1, 1);
+
+        let r_sq = 16.0;
+
+        let (e, f) = lj_soft.energy_force(r_sq);
+        let r_eff_sq = 0.5 * 3.4 * 3.4 + r_sq;
+        let (e_expected, f_expected) = lj.energy_force(r_eff_sq);
+
+        assert_relative_eq!(e, e_expected, epsilon = 1e-10);
+        assert_relative_eq!(f, f_expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_softcore_lambda_zero() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let lj_soft = Softcore::new(lj, 0.5, 3.4, 0.0, 1, 1);
+
+        let r_sq = 16.0;
+        let e = lj_soft.energy(r_sq);
+
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_softcore_finite_at_zero() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let lj_soft = Softcore::new(lj, 0.5, 3.4, 0.5, 1, 1);
+
+        let e = lj_soft.energy(0.0);
+
+        assert!(e.is_finite());
+        assert!(e.abs() < 1e10);
+    }
+
+    #[test]
+    fn test_softcore_numerical_derivative() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let lj_soft = Softcore::new(lj, 0.5, 3.4, 0.5, 1, 1);
+
+        let r = 4.0;
+
+        let h = 1e-7;
+        let e_plus = lj_soft.energy((r + h) * (r + h));
+        let e_minus = lj_soft.energy((r - h) * (r - h));
+        let dv_dr_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let f = lj_soft.force_factor(r * r);
+        let dv_dr_analytical = -f * r;
+
+        assert_relative_eq!(dv_dr_analytical, dv_dr_numerical, epsilon = 1e-6);
+    }
+}
