@@ -148,3 +148,97 @@ impl<T: Vector> Potential4<T> for Harm<T> {
         (energy, derivative)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+    use core::f64::consts::PI;
+
+    #[test]
+    fn test_harm_at_equilibrium() {
+        let harm: Harm<f64> = Harm::new(100.0, PI / 3.0);
+
+        let phi = PI / 3.0;
+        let e = harm.energy(phi.cos(), phi.sin());
+
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_displacement() {
+        let k = 50.0;
+        let harm: Harm<f64> = Harm::cis(k);
+
+        let phi = 0.3;
+        let e = harm.energy(phi.cos(), phi.sin());
+
+        let expected = k * phi * phi;
+        assert_relative_eq!(e, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_trans() {
+        let k = 75.0;
+        let harm: Harm<f64> = Harm::trans(k);
+
+        let e_eq = harm.energy(-1.0, 0.0);
+        assert_relative_eq!(e_eq, 0.0, epsilon = 1e-10);
+
+        let phi = PI - 0.2;
+        let e = harm.energy(phi.cos(), phi.sin());
+        let expected = k * 0.2 * 0.2;
+        assert_relative_eq!(e, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_derivative_at_equilibrium() {
+        let harm: Harm<f64> = Harm::new(100.0, PI / 4.0);
+
+        let phi = PI / 4.0;
+        let d = harm.derivative(phi.cos(), phi.sin());
+
+        assert_relative_eq!(d, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_numerical_derivative() {
+        let harm: Harm<f64> = Harm::new(50.0, 0.5);
+        let phi = 0.8;
+
+        let h = 1e-7;
+        let e_plus = harm.energy((phi + h).cos(), (phi + h).sin());
+        let e_minus = harm.energy((phi - h).cos(), (phi - h).sin());
+        let deriv_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let deriv_analytical = harm.derivative(phi.cos(), phi.sin());
+
+        assert_relative_eq!(deriv_analytical, deriv_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_harm_energy_derivative_consistency() {
+        let harm: Harm<f64> = Harm::new(30.0, -PI / 6.0);
+        let phi = 0.4;
+
+        let e = harm.energy(phi.cos(), phi.sin());
+        let d = harm.derivative(phi.cos(), phi.sin());
+        let (e2, d2) = harm.energy_derivative(phi.cos(), phi.sin());
+
+        assert_relative_eq!(e, e2, epsilon = 1e-10);
+        assert_relative_eq!(d, d2, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_sign_of_derivative() {
+        let harm: Harm<f64> = Harm::cis(100.0);
+
+        let phi_pos = 0.3;
+        let d_pos = harm.derivative(phi_pos.cos(), phi_pos.sin());
+        assert!(d_pos > 0.0, "Expected positive derivative for phi > phi0");
+
+        let phi_neg = -0.3;
+        let d_neg = harm.derivative(phi_neg.cos(), phi_neg.sin());
+        assert!(d_neg < 0.0, "Expected negative derivative for phi < phi0");
+    }
+}
