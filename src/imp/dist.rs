@@ -125,3 +125,95 @@ impl<T: Vector> Dist<T> {
         (self.k * delta * delta, self.two_k * delta)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_dist_at_equilibrium() {
+        let pot: Dist<f64> = Dist::new(100.0, 0.5);
+
+        let e = pot.energy(0.5);
+        let de = pot.derivative(0.5);
+
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+        assert_relative_eq!(de, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_dist_planar_at_zero() {
+        let pot: Dist<f64> = Dist::planar(100.0);
+
+        let e = pot.energy(0.0);
+        let de = pot.derivative(0.0);
+
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+        assert_relative_eq!(de, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_dist_symmetry() {
+        let pot: Dist<f64> = Dist::planar(100.0);
+
+        let e_pos = pot.energy(0.5);
+        let e_neg = pot.energy(-0.5);
+
+        assert_relative_eq!(e_pos, e_neg, epsilon = 1e-10);
+
+        let de_pos = pot.derivative(0.5);
+        let de_neg = pot.derivative(-0.5);
+
+        assert_relative_eq!(de_pos, -de_neg, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_dist_quadratic() {
+        let k = 100.0;
+        let pot: Dist<f64> = Dist::planar(k);
+
+        let d = 0.3;
+        let e = pot.energy(d);
+
+        assert_relative_eq!(e, k * d * d, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_dist_derivative() {
+        let k = 100.0;
+        let pot: Dist<f64> = Dist::planar(k);
+
+        let d = 0.3;
+        let de = pot.derivative(d);
+
+        assert_relative_eq!(de, 2.0 * k * d, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_dist_numerical_derivative() {
+        let pot: Dist<f64> = Dist::new(100.0, 0.2);
+
+        let d = 0.5;
+        let h = 1e-7;
+
+        let e_plus = pot.energy(d + h);
+        let e_minus = pot.energy(d - h);
+        let de_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let de_analytical = pot.derivative(d);
+
+        assert_relative_eq!(de_analytical, de_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_dist_energy_derivative() {
+        let pot: Dist<f64> = Dist::new(100.0, 0.3);
+        let d = 0.5;
+
+        let (e, de) = pot.energy_derivative(d);
+
+        assert_relative_eq!(e, pot.energy(d), epsilon = 1e-10);
+        assert_relative_eq!(de, pot.derivative(d), epsilon = 1e-10);
+    }
+}
