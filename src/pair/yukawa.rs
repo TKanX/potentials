@@ -140,3 +140,71 @@ impl<T: Vector> Potential2<T> for Yukawa<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_yukawa_at_r_1() {
+        let yukawa: Yukawa<f64> = Yukawa::new(1.0, 1.0);
+
+        let energy = yukawa.energy(1.0);
+        let expected = (-1.0_f64).exp();
+
+        assert_relative_eq!(energy, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_yukawa_approaches_coulomb() {
+        let yukawa: Yukawa<f64> = Yukawa::new(1.0, 0.001);
+        let coul = crate::pair::Coul::<f64>::new(1.0);
+
+        let r_sq = 4.0;
+        let e_yukawa = yukawa.energy(r_sq);
+        let e_coul = coul.energy(r_sq);
+
+        let rel_diff = (e_yukawa - e_coul).abs() / e_coul;
+        assert!(rel_diff < 0.01);
+    }
+
+    #[test]
+    fn test_yukawa_from_debye_length() {
+        let y1: Yukawa<f64> = Yukawa::new(1.0, 0.1);
+        let y2: Yukawa<f64> = Yukawa::from_debye_length(1.0, 10.0);
+
+        let r_sq = 9.0;
+        assert_relative_eq!(y1.energy(r_sq), y2.energy(r_sq), epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_yukawa_energy_force_consistency() {
+        let yukawa: Yukawa<f64> = Yukawa::new(10.0, 0.5);
+        let r_sq = 4.0;
+
+        let (e1, f1) = yukawa.energy_force(r_sq);
+        let e2 = yukawa.energy(r_sq);
+        let f2 = yukawa.force_factor(r_sq);
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-10);
+        assert_relative_eq!(f1, f2, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_yukawa_numerical_derivative() {
+        let yukawa: Yukawa<f64> = Yukawa::new(10.0, 0.5);
+        let r = 2.0;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = yukawa.energy((r + h) * (r + h));
+        let v_minus = yukawa.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = yukawa.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
