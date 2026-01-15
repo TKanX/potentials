@@ -145,3 +145,76 @@ impl<T: Vector> Potential2<T> for Cubic<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_cubic_at_equilibrium() {
+        let cubic: Cubic<f64> = Cubic::new(300.0, -50.0, 1.5);
+        let r0 = 1.5;
+
+        let energy = cubic.energy(r0 * r0);
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cubic_force_at_equilibrium() {
+        let cubic: Cubic<f64> = Cubic::new(300.0, -50.0, 1.5);
+        let r0 = 1.5;
+
+        let force = cubic.force_factor(r0 * r0);
+        assert_relative_eq!(force, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cubic_reduces_to_harmonic() {
+        let k = 300.0;
+        let r0 = 1.5;
+        let cubic: Cubic<f64> = Cubic::new(k, 0.0, r0);
+        let harm = crate::bond::Harm::<f64>::new(k, r0);
+
+        let r_sq = 1.6 * 1.6;
+        assert_relative_eq!(cubic.energy(r_sq), harm.energy(r_sq), epsilon = 1e-10);
+        assert_relative_eq!(
+            cubic.force_factor(r_sq),
+            harm.force_factor(r_sq),
+            epsilon = 1e-10
+        );
+    }
+
+    #[test]
+    fn test_cubic_asymmetry() {
+        let cubic: Cubic<f64> = Cubic::new(100.0, -20.0, 1.0);
+
+        let dr = 0.2;
+        let e_stretch = cubic.energy((1.0 + dr).powi(2));
+        let e_compress = cubic.energy((1.0 - dr).powi(2));
+
+        assert!(
+            e_stretch < e_compress,
+            "With k_cubic < 0, stretching {} should be lower than compression {}",
+            e_stretch,
+            e_compress
+        );
+    }
+
+    #[test]
+    fn test_cubic_numerical_derivative() {
+        let cubic: Cubic<f64> = Cubic::new(300.0, -50.0, 1.5);
+        let r = 1.6;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = cubic.energy((r + h) * (r + h));
+        let v_minus = cubic.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = cubic.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
