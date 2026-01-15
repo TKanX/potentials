@@ -177,3 +177,66 @@ impl<T: Vector> Potential2<T> for Quart<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_quart_at_equilibrium() {
+        let quart: Quart<f64> = Quart::new(300.0, -50.0, 10.0, 1.5);
+        let r0 = 1.5;
+
+        let energy = quart.energy(r0 * r0);
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_quart_force_at_equilibrium() {
+        let quart: Quart<f64> = Quart::new(300.0, -50.0, 10.0, 1.5);
+        let r0 = 1.5;
+
+        let force = quart.force_factor(r0 * r0);
+        assert_relative_eq!(force, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_quart_reduces_to_harmonic() {
+        let k = 300.0;
+        let r0 = 1.5;
+        let quart: Quart<f64> = Quart::new(k, 0.0, 0.0, r0);
+        let harm = crate::bond::Harm::<f64>::new(k, r0);
+
+        let r_sq = 1.6 * 1.6;
+        assert_relative_eq!(quart.energy(r_sq), harm.energy(r_sq), epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_quart_symmetric() {
+        let quart: Quart<f64> = Quart::symmetric(300.0, 10.0, 1.0);
+
+        let dr = 0.2;
+        let e_stretch = quart.energy((1.0 + dr).powi(2));
+        let e_compress = quart.energy((1.0 - dr).powi(2));
+
+        assert_relative_eq!(e_stretch, e_compress, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_quart_numerical_derivative() {
+        let quart: Quart<f64> = Quart::new(300.0, -50.0, 10.0, 1.5);
+        let r = 1.6;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = quart.energy((r + h) * (r + h));
+        let v_minus = quart.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = quart.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
