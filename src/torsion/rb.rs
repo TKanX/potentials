@@ -160,3 +160,66 @@ impl<T: Vector> Potential4<T> for Rb<T> {
         (energy, derivative)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+    use core::f64::consts::PI;
+
+    #[test]
+    fn test_rb_at_zero() {
+        let rb: Rb<f64> = Rb::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+
+        let e0 = rb.energy(1.0, 0.0);
+        assert_relative_eq!(e0, 21.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_rb_at_180() {
+        let rb: Rb<f64> = Rb::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+
+        let e180 = rb.energy(-1.0, 0.0);
+        assert_relative_eq!(e180, -3.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_rb_quadratic() {
+        let rb: Rb<f64> = Rb::new(1.0, 0.0, 2.0, 0.0, 0.0, 0.0);
+
+        let phi = PI / 4.0;
+        let cos_phi = phi.cos();
+        let energy = rb.energy(cos_phi, phi.sin());
+
+        let expected = 1.0 + 2.0 * cos_phi * cos_phi;
+        assert_relative_eq!(energy, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_rb_numerical_derivative() {
+        let rb: Rb<f64> = Rb::new(9.28, 12.16, -13.12, -3.06, 26.24, -31.5);
+        let phi = 1.1;
+
+        let h = 1e-7;
+        let e_plus = rb.energy((phi + h).cos(), (phi + h).sin());
+        let e_minus = rb.energy((phi - h).cos(), (phi - h).sin());
+        let deriv_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let deriv_analytical = rb.derivative(phi.cos(), phi.sin());
+
+        assert_relative_eq!(deriv_analytical, deriv_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_rb_from_array() {
+        let rb1: Rb<f64> = Rb::new(1.0, 2.0, 3.0, 4.0, 5.0, 6.0);
+        let rb2: Rb<f64> = Rb::from_array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]);
+
+        let phi = 0.7;
+        assert_relative_eq!(
+            rb1.energy(phi.cos(), phi.sin()),
+            rb2.energy(phi.cos(), phi.sin()),
+            epsilon = 1e-10
+        );
+    }
+}
