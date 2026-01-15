@@ -132,3 +132,65 @@ impl<T: Vector> Potential2<T> for G96<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_g96_at_equilibrium() {
+        let g96: G96<f64> = G96::new(100.0, 1.5);
+
+        let r0 = 1.5;
+        let energy = g96.energy(r0 * r0);
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_g96_force_at_equilibrium() {
+        let g96: G96<f64> = G96::new(100.0, 1.5);
+        let r0 = 1.5;
+
+        let force = g96.force_factor(r0 * r0);
+        assert_relative_eq!(force, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_g96_displaced() {
+        let k = 4.0;
+        let r0 = 1.0;
+        let g96: G96<f64> = G96::new(k, r0);
+
+        let r_sq = 2.0;
+        let energy = g96.energy(r_sq);
+
+        assert_relative_eq!(energy, 1.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_g96_numerical_derivative() {
+        let g96: G96<f64> = G96::new(100.0, 1.5);
+        let r = 1.6;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = g96.energy((r + h) * (r + h));
+        let v_minus = g96.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = g96.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_g96_from_r0_sq() {
+        let g96_a: G96<f64> = G96::new(100.0, 1.5);
+        let g96_b: G96<f64> = G96::from_r0_sq(100.0, 1.5 * 1.5);
+
+        let r_sq = 2.0;
+        assert_relative_eq!(g96_a.energy(r_sq), g96_b.energy(r_sq), epsilon = 1e-10);
+    }
+}
