@@ -83,3 +83,52 @@ impl<P: Potential2<T>, T: Vector> Potential2<T> for Cutoff<P, T> {
         (mask.select(e, T::zero()), mask.select(s, T::zero()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::pair::Lj;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_cutoff_inside() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let lj_cut = Cutoff::new(lj, 12.0);
+
+        let r_sq = 16.0;
+
+        let e_base = lj.energy(r_sq);
+        let e_cut = lj_cut.energy(r_sq);
+
+        assert_relative_eq!(e_base, e_cut, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cutoff_outside() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let lj_cut = Cutoff::new(lj, 10.0);
+
+        let r_sq = 121.0;
+
+        let e = lj_cut.energy(r_sq);
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+
+        let s = lj_cut.force_factor(r_sq);
+        assert_relative_eq!(s, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cutoff_at_boundary() {
+        let lj: Lj<f64> = Lj::new(1.0, 3.4);
+        let rc = 10.0;
+        let lj_cut = Cutoff::new(lj, rc);
+
+        let r_in = rc - 0.001;
+        let e_in = lj_cut.energy(r_in * r_in);
+        assert!(e_in != 0.0);
+
+        let r_out = rc + 0.001;
+        let e_out = lj_cut.energy(r_out * r_out);
+        assert_relative_eq!(e_out, 0.0, epsilon = 1e-10);
+    }
+}
