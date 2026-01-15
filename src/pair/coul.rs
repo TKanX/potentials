@@ -139,3 +139,66 @@ impl<T: Vector> Potential2<T> for Coul<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_coul_at_r_2() {
+        let coul: Coul<f64> = Coul::new(1.0);
+        let energy = coul.energy(4.0);
+        assert_relative_eq!(energy, 0.5, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_coul_opposite_charges() {
+        let coul: Coul<f64> = Coul::new(-1.0);
+        let energy = coul.energy(1.0);
+        assert!(energy < 0.0);
+    }
+
+    #[test]
+    fn test_coul_from_charges() {
+        let k = 332.0;
+        let q1 = 1.0;
+        let q2 = -1.0;
+
+        let coul1: Coul<f64> = Coul::from_charges(k, q1, q2);
+        let coul2: Coul<f64> = Coul::new(k * q1 * q2);
+
+        let r_sq = 4.0;
+        assert_relative_eq!(coul1.energy(r_sq), coul2.energy(r_sq), epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_coul_energy_force_consistency() {
+        let coul: Coul<f64> = Coul::new(100.0);
+        let r_sq = 9.0;
+
+        let (e1, f1) = coul.energy_force(r_sq);
+        let e2 = coul.energy(r_sq);
+        let f2 = coul.force_factor(r_sq);
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-10);
+        assert_relative_eq!(f1, f2, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_coul_numerical_derivative() {
+        let coul: Coul<f64> = Coul::new(10.0);
+        let r = 2.0;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = coul.energy((r + h) * (r + h));
+        let v_minus = coul.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = coul.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+}
