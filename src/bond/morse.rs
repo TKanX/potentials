@@ -165,3 +165,69 @@ impl<T: Vector> Potential2<T> for Morse<T> {
         (energy, force)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_morse_at_equilibrium() {
+        let morse: Morse<f64> = Morse::new(100.0, 2.0, 1.5);
+
+        let r0 = 1.5;
+        let energy = morse.energy(r0 * r0);
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_morse_force_at_equilibrium() {
+        let morse: Morse<f64> = Morse::new(100.0, 2.0, 1.5);
+        let r0 = 1.5;
+
+        let force = morse.force_factor(r0 * r0);
+        assert_relative_eq!(force, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_morse_dissociation_limit() {
+        let d = 100.0;
+        let morse: Morse<f64> = Morse::new(d, 2.0, 1.0);
+
+        let r_large = 10.0;
+        let energy = morse.energy(r_large * r_large);
+
+        assert_relative_eq!(energy, d, epsilon = 0.01);
+    }
+
+    #[test]
+    fn test_morse_numerical_derivative() {
+        let morse: Morse<f64> = Morse::new(100.0, 2.0, 1.5);
+        let r = 1.6;
+        let r_sq = r * r;
+
+        let h = 1e-6;
+        let v_plus = morse.energy((r + h) * (r + h));
+        let v_minus = morse.energy((r - h) * (r - h));
+        let dv_dr_numerical = (v_plus - v_minus) / (2.0 * h);
+
+        let s_numerical = -dv_dr_numerical / r;
+        let s_analytical = morse.force_factor(r_sq);
+
+        assert_relative_eq!(s_analytical, s_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_morse_from_harmonic() {
+        let k = 200.0;
+        let d = 100.0;
+        let r0 = 1.5;
+
+        let _morse: Morse<f64> = Morse::from_harmonic(k, d, r0);
+
+        let alpha = (k / (2.0 * d)).sqrt();
+        let expected_curvature = 2.0 * d * alpha * alpha;
+
+        assert_relative_eq!(expected_curvature, k, epsilon = 1e-10);
+    }
+}
