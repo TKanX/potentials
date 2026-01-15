@@ -203,3 +203,94 @@ fn chebyshev_cos_sin<T: Vector>(n: i32, cos_x: T, sin_x: T) -> (T, T) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+    use core::f64::consts::PI;
+
+    #[test]
+    fn test_cos_planar_at_zero() {
+        let cos: Cos<f64> = Cos::planar(10.0);
+
+        let e = cos.energy(1.0, 0.0);
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cos_planar_at_90() {
+        let k = 10.0;
+        let cos: Cos<f64> = Cos::planar(k);
+
+        let xi = PI / 2.0;
+        let e = cos.energy(xi.cos(), xi.sin());
+        let expected = 2.0 * k;
+        assert_relative_eq!(e, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cos_n1() {
+        let k = 5.0;
+        let d = 0.0;
+        let cos: Cos<f64> = Cos::new(k, 1, d);
+
+        let xi = 1.0;
+        let e = cos.energy(xi.cos(), xi.sin());
+        let expected = k * (1.0 + xi.cos());
+        assert_relative_eq!(e, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cos_n3() {
+        let k = 8.0;
+        let cos: Cos<f64> = Cos::trigonal(k);
+
+        let e = cos.energy(1.0, 0.0);
+        assert_relative_eq!(e, 2.0 * k, epsilon = 1e-10);
+
+        let xi = PI / 3.0;
+        let e60 = cos.energy(xi.cos(), xi.sin());
+        assert_relative_eq!(e60, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cos_numerical_derivative() {
+        let cos: Cos<f64> = Cos::new(15.0, 2, 0.5);
+        let xi = 0.7;
+
+        let h = 1e-7;
+        let e_plus = cos.energy((xi + h).cos(), (xi + h).sin());
+        let e_minus = cos.energy((xi - h).cos(), (xi - h).sin());
+        let deriv_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let deriv_analytical = cos.derivative(xi.cos(), xi.sin());
+
+        assert_relative_eq!(deriv_analytical, deriv_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_chebyshev_n4() {
+        let xi = 0.8;
+        let (cos4, sin4) = chebyshev_cos_sin(4, xi.cos(), xi.sin());
+
+        let expected_cos = (4.0 * xi).cos();
+        let expected_sin = (4.0 * xi).sin();
+
+        assert_relative_eq!(cos4, expected_cos, epsilon = 1e-10);
+        assert_relative_eq!(sin4, expected_sin, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cos_energy_derivative_consistency() {
+        let cos: Cos<f64> = Cos::new(20.0, 3, PI / 4.0);
+        let xi = 1.2;
+
+        let e1 = cos.energy(xi.cos(), xi.sin());
+        let d1 = cos.derivative(xi.cos(), xi.sin());
+        let (e2, d2) = cos.energy_derivative(xi.cos(), xi.sin());
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-10);
+        assert_relative_eq!(d1, d2, epsilon = 1e-10);
+    }
+}
