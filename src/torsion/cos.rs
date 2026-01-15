@@ -240,3 +240,74 @@ impl<T: Vector> Potential4<T> for Cos<T> {
         (energy, derivative)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+    use core::f64::consts::PI;
+
+    #[test]
+    fn test_cos_n1_delta0() {
+        let k = 2.0;
+        let torsion: Cos<f64> = Cos::new(k, 1, 0.0);
+
+        let e0 = torsion.energy(1.0, 0.0);
+        assert_relative_eq!(e0, 2.0 * k, epsilon = 1e-10);
+
+        let e_pi = torsion.energy(-1.0, 0.0);
+        assert_relative_eq!(e_pi, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cos_n3() {
+        let k = 1.0;
+        let torsion: Cos<f64> = Cos::new(k, 3, 0.0);
+
+        let e0 = torsion.energy(1.0, 0.0);
+        assert_relative_eq!(e0, 2.0, epsilon = 1e-10);
+
+        let phi = PI / 3.0;
+        let e60 = torsion.energy(phi.cos(), phi.sin());
+        assert_relative_eq!(e60, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cos_with_phase() {
+        let k = 1.0;
+        let delta = PI;
+        let torsion: Cos<f64> = Cos::new(k, 1, delta);
+
+        let e0 = torsion.energy(1.0, 0.0);
+        assert_relative_eq!(e0, 0.0, epsilon = 1e-10);
+
+        let e_pi = torsion.energy(-1.0, 0.0);
+        assert_relative_eq!(e_pi, 2.0 * k, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cos_derivative_at_extrema() {
+        let torsion: Cos<f64> = Cos::new(1.0, 1, 0.0);
+
+        let d0 = torsion.derivative(1.0, 0.0);
+        assert_relative_eq!(d0, 0.0, epsilon = 1e-10);
+
+        let d_pi = torsion.derivative(-1.0, 0.0);
+        assert_relative_eq!(d_pi, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cos_numerical_derivative() {
+        let torsion: Cos<f64> = Cos::new(2.0, 3, PI / 4.0);
+        let phi = 0.7;
+
+        let h = 1e-7;
+        let e_plus = torsion.energy((phi + h).cos(), (phi + h).sin());
+        let e_minus = torsion.energy((phi - h).cos(), (phi - h).sin());
+        let deriv_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let deriv_analytical = torsion.derivative(phi.cos(), phi.sin());
+
+        assert_relative_eq!(deriv_analytical, deriv_numerical, epsilon = 1e-6);
+    }
+}
