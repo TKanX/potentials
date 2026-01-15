@@ -147,3 +147,65 @@ impl<T: Vector> Potential3<T> for Harm<T> {
         (energy, derivative)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+    use core::f64::consts::PI;
+
+    #[test]
+    fn test_harm_at_equilibrium() {
+        let theta0 = PI / 3.0;
+        let harm: Harm<f64> = Harm::new(100.0, theta0);
+
+        let cos_theta = theta0.cos();
+        let energy = harm.energy(1.0, 1.0, cos_theta);
+
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_from_degrees() {
+        let h1: Harm<f64> = Harm::from_degrees(100.0, 109.5);
+        let h2: Harm<f64> = Harm::new(100.0, 109.5 * PI / 180.0);
+
+        let cos_theta = 0.5;
+        assert_relative_eq!(
+            h1.energy(1.0, 1.0, cos_theta),
+            h2.energy(1.0, 1.0, cos_theta),
+            epsilon = 1e-10
+        );
+    }
+
+    #[test]
+    fn test_harm_displaced() {
+        let k = 100.0;
+        let theta0 = PI / 2.0;
+        let harm: Harm<f64> = Harm::new(k, theta0);
+
+        let theta = PI / 3.0;
+        let cos_theta = theta.cos();
+        let energy = harm.energy(1.0, 1.0, cos_theta);
+
+        let dtheta = theta - theta0;
+        let expected = k * dtheta * dtheta;
+
+        assert_relative_eq!(energy, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_numerical_derivative() {
+        let harm: Harm<f64> = Harm::new(100.0, PI / 3.0);
+        let cos_theta = 0.3;
+
+        let h = 1e-6;
+        let e_plus = harm.energy(1.0, 1.0, cos_theta + h);
+        let e_minus = harm.energy(1.0, 1.0, cos_theta - h);
+        let deriv_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let deriv_analytical = harm.derivative(1.0, 1.0, cos_theta);
+
+        assert_relative_eq!(deriv_analytical, deriv_numerical, epsilon = 1e-6);
+    }
+}
