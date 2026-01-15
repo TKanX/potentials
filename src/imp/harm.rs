@@ -143,3 +143,69 @@ impl<T: Vector> Potential4<T> for Harm<T> {
         (energy, derivative)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+    use core::f64::consts::PI;
+
+    #[test]
+    fn test_harm_planar_at_equilibrium() {
+        let harm: Harm<f64> = Harm::planar(100.0);
+
+        let e = harm.energy(1.0, 0.0);
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_planar_displaced() {
+        let k = 50.0;
+        let harm: Harm<f64> = Harm::planar(k);
+
+        let xi = 0.1;
+        let e = harm.energy(xi.cos(), xi.sin());
+
+        let expected = k * xi * xi;
+        assert_relative_eq!(e, expected, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_tetrahedral() {
+        let k = 40.0;
+        let harm: Harm<f64> = Harm::tetrahedral(k);
+
+        let xi0 = (1.0_f64 / 3.0_f64).sqrt().asin();
+        let e = harm.energy(xi0.cos(), xi0.sin());
+
+        assert_relative_eq!(e, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_harm_numerical_derivative() {
+        let harm: Harm<f64> = Harm::new(75.0, 0.2);
+        let xi = 0.4;
+
+        let h = 1e-7;
+        let e_plus = harm.energy((xi + h).cos(), (xi + h).sin());
+        let e_minus = harm.energy((xi - h).cos(), (xi - h).sin());
+        let deriv_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let deriv_analytical = harm.derivative(xi.cos(), xi.sin());
+
+        assert_relative_eq!(deriv_analytical, deriv_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_harm_energy_derivative_consistency() {
+        let harm: Harm<f64> = Harm::new(60.0, PI / 6.0);
+        let xi = 0.7;
+
+        let e1 = harm.energy(xi.cos(), xi.sin());
+        let d1 = harm.derivative(xi.cos(), xi.sin());
+        let (e2, d2) = harm.energy_derivative(xi.cos(), xi.sin());
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-10);
+        assert_relative_eq!(d1, d2, epsilon = 1e-10);
+    }
+}
