@@ -115,3 +115,54 @@ impl<T: Vector> Potential3<T> for Cross<T> {
         (self.energy(r_ij_sq, r_jk_sq, cos_theta), T::zero())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_cross_at_equilibrium() {
+        let r_ij0 = 1.5;
+        let r_jk0 = 1.6;
+        let cross: Cross<f64> = Cross::new(100.0, r_ij0, r_jk0);
+
+        let energy = cross.energy(r_ij0 * r_ij0, r_jk0 * r_jk0, 0.5);
+        assert_relative_eq!(energy, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cross_derivative_zero() {
+        let cross: Cross<f64> = Cross::new(100.0, 1.5, 1.6);
+
+        let deriv = cross.derivative(2.0, 3.0, 0.5);
+        assert_relative_eq!(deriv, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_cross_sign() {
+        let k = 100.0;
+        let r0 = 1.0;
+        let cross: Cross<f64> = Cross::symmetric(k, r0);
+
+        let e_both_stretched = cross.energy(1.5 * 1.5, 1.5 * 1.5, 0.5);
+        assert!(e_both_stretched > 0.0);
+
+        let e_both_compressed = cross.energy(0.5 * 0.5, 0.5 * 0.5, 0.5);
+        assert!(e_both_compressed > 0.0);
+
+        let e_mixed = cross.energy(1.5 * 1.5, 0.5 * 0.5, 0.5);
+        assert!(e_mixed < 0.0);
+    }
+
+    #[test]
+    fn test_cross_value() {
+        let k = 50.0;
+        let r_ij0 = 1.0;
+        let r_jk0 = 1.0;
+        let cross: Cross<f64> = Cross::new(k, r_ij0, r_jk0);
+
+        let energy = cross.energy(1.5 * 1.5, 1.2 * 1.2, 0.5);
+        assert_relative_eq!(energy, 5.0, epsilon = 1e-10);
+    }
+}
