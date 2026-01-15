@@ -191,3 +191,59 @@ impl<T: Vector> Potential4<T> for Opls<T> {
         (energy, derivative)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+    use core::f64::consts::PI;
+
+    #[test]
+    fn test_opls_at_zero() {
+        let opls: Opls<f64> = Opls::new(1.0, 2.0, 3.0, 4.0);
+
+        let e0 = opls.energy(1.0, 0.0);
+        assert_relative_eq!(e0, 8.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_opls_threefold() {
+        let c3 = 2.0;
+        let opls: Opls<f64> = Opls::threefold(c3);
+
+        let e0 = opls.energy(1.0, 0.0);
+        assert_relative_eq!(e0, 4.0, epsilon = 1e-10);
+
+        let phi = PI / 3.0;
+        let e60 = opls.energy(phi.cos(), phi.sin());
+        assert_relative_eq!(e60, 0.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_opls_numerical_derivative() {
+        let opls: Opls<f64> = Opls::new(1.0, 0.5, 1.5, 0.2);
+        let phi = 0.8;
+
+        let h = 1e-7;
+        let e_plus = opls.energy((phi + h).cos(), (phi + h).sin());
+        let e_minus = opls.energy((phi - h).cos(), (phi - h).sin());
+        let deriv_numerical = (e_plus - e_minus) / (2.0 * h);
+
+        let deriv_analytical = opls.derivative(phi.cos(), phi.sin());
+
+        assert_relative_eq!(deriv_analytical, deriv_numerical, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_opls_energy_derivative_consistency() {
+        let opls: Opls<f64> = Opls::new(1.0, 0.5, 1.5, 0.2);
+        let phi = 1.2;
+
+        let (e1, d1) = opls.energy_derivative(phi.cos(), phi.sin());
+        let e2 = opls.energy(phi.cos(), phi.sin());
+        let d2 = opls.derivative(phi.cos(), phi.sin());
+
+        assert_relative_eq!(e1, e2, epsilon = 1e-10);
+        assert_relative_eq!(d1, d2, epsilon = 1e-10);
+    }
+}
